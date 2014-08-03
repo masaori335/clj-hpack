@@ -1,14 +1,11 @@
 # clj-hpack
 
-A Clojure library designed to ... well, that part is up to you.
+A Clojure library of HPACK draft-09 implementation.
 
-## Usage
-
-FIXME
+- http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09
 
 ## License
 
-Copyright © 2014 FIXME
+Copyright © 2014 Masaori Koshiba
 
-Distributed under the Eclipse Public License either version 1.0 or (at
-your option) any later version.
+The MIT License (http://opensource.org/licenses/MIT)

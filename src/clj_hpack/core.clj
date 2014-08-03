@@ -86,9 +86,8 @@
         (recur (quot i 128) (conj result (+ (bit-and i 127) 128)))))))
 
 (defn encode
-  "Encode header"
+  "TODO: Encode header"
   [buf]
-  (println "encode")
   0)
 
 ;;; Decoder
