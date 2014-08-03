@@ -8,39 +8,6 @@
   (:require [clojure.test :refer :all]
             [clj-hpack.core :refer :all]))
 
-;;; Util functions
-(deftest buf-read-byte-test
-  (testing ""
-    (is (= (buf-read-byte [2r00000000 2r00100000] 1) 2r00100000))))
-
-(deftest buf-read-bit-test1
-  (testing ""
-    (is (= (buf-read-bit [2r00100000 2r00100000] 2) 1))))
-
-(deftest buf-read-bit-test2
-  (testing ""
-    (is (= (buf-read-bit [2r00100000 2r00100000] 3) 0))))
-
-(deftest buf-read-bit-test3
-  (testing ""
-    (is (= (buf-read-bit [2r00000000 2r00100000] 10) 1))))
-
-(deftest buf-read-bits-test1
-  (testing ""
-    (is (= (buf-read-bits [2r11111111] 0 8) [2r11111111]))))
-
-(deftest buf-read-bits-test2
-  (testing ""
-    (is (= (buf-read-bits [2r11111111 2r00000000] 4 8) [2r11110000]))))
-
-(deftest buf-read-bits-test3
-  (testing ""
-    (is (= (buf-read-bits [2r11111111 2r00001111] 4 12) [2r11110000 2r11110000]))))
-
-(deftest buf-read-bits-test4
-  (testing ""
-    (is (= (buf-read-bits [2r11111111 2r00001111 2r11110000] 4 16) [2r11110000 2r11111111]))))
-
 ;;; D.1 Integer Representation Examples
 
 (deftest D.1.1

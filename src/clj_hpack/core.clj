@@ -115,21 +115,6 @@
   [buf]
   (get buf @cursor))
 
-(defn buf-read-bit
-  "Get n-th bit from buf"
-  [buf n]
-  (let [quotient (quot n 8)
-        remainder (bit-and n 7)]
-    (if (bit-test (buf-read-byte buf quotient) (- 7 remainder)) 1 0)))
-
-(defn buf-read-bits
-  [buf n len]
-  (loop [i 0 j 0 byte 0 result []]
-    (cond
-     (= i len) (if (= byte 0) result (conj result byte))
-     (= j 7) (recur (inc i) 0 0 (conj result (+ byte (bit-shift-left (buf-read-bit buf (+ n i)) (- 7 j)))))
-     :else (recur (inc i) (inc j) (+ byte (bit-shift-left (buf-read-bit buf (+ n i)) (- 7 j))) result))))
-
 (defn decode-integer-representation
   "6.1 Integer Representation"
   [buf n]
