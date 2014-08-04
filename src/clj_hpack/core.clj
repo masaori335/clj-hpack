@@ -77,19 +77,25 @@
 (defprotocol IndexedTableProtocol
   "Access to Header Table"
   (ref-header [this index])
-  (add-header! [this header]))
+  (add-header! [this header])
+  (ref-table [this]))
 
 ;; "TODO: Control header-table size
 ;;        http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-3.3.3"
 (deftype IndexedTable [^:volatile-mutable header-table]
   IndexedTableProtocol
   (ref-header [this index]
+    (if debug? (println "[ref-header] index:" index))
     (if (<= index 61)
       (nth static-table index)
-      (nth header-table index)))
+      (nth header-table (- index 62))))
 
   (add-header! [this header]
-    (set! header-table (cons header header-table))))
+    (if debug? (println "[add-header!] header-table" header-table))
+    (set! header-table (cons header header-table))
+    (if debug? (println "[add-header!] header-table" header-table)))
+
+  (ref-table [this] header-table))
 
 (def indexed-table (IndexedTable. '()))
 
@@ -244,13 +250,15 @@
 (defn decode
   "Decode header data.
    The 'buf' arg should be binary array
-   TODO: decode from string"
+   TODO: decode from string
+   TODO: header-table object"
   [buf]
+  (if debug? (println "[decode] indexed-table:" indexed-table))
+  (if debug? (println "[decode] header-table:" (ref-table indexed-table)))
   (reset! cursor 0)
   (loop [result '[]]
-    (println "result:" result "@cursor:" @cursor)
-    (println "current-octet:" (current-octet buf))
-    (println "next-octet:" (next-octet buf))
     (if (nil? (current-octet buf))
-      result
+      (do
+        (if debug? (println "[decode] result:" result))
+        result)
       (recur (conj result (decode-header buf))))))
