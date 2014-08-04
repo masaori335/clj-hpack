@@ -3,7 +3,8 @@
 (def debug? true)
 
 (def static-table
-  [[":authority"                   ""]
+  [["zero"                         nil]
+   [":authority"                   ""]
    [":method"                      "GET"]
    [":method"                      "POST"]
    [":path"                        "/"]
@@ -73,6 +74,25 @@
   [n]
   (- (bit-shift-left 1 n) 1))
 
+(defprotocol IndexedTableProtocol
+  "Access to Header Table"
+  (ref-header [this index])
+  (add-header! [this header]))
+
+;; "TODO: Control header-table size
+;;        http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-3.3.3"
+(deftype IndexedTable [^:volatile-mutable header-table]
+  IndexedTableProtocol
+  (ref-header [this index]
+    (if (<= index 61)
+      (nth static-table index)
+      (nth header-table index)))
+
+  (add-header! [this header]
+    (set! header-table (cons header header-table))))
+
+(def indexed-table (IndexedTable. '()))
+
 ;;; Encoder
 
 (defn encode-integer-representation
@@ -91,18 +111,6 @@
   0)
 
 ;;; Decoder
-
-(defprotocol IndexedTableProtocol
-  "Access to Header Table"
-  (ref-header [this index])
-  (add-header! [this header]))
-
-(deftype IndexedTable [^:volatile-mutable table]
-  IndexedTableProtocol
-  (ref-header [this index] (get table (dec index)))
-  (add-header! [this header] (set! table (conj table header))))
-
-(def indexed-table (IndexedTable. static-table))
 
 (def cursor (atom 0))
 
