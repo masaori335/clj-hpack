@@ -114,13 +114,17 @@
 
 (def cursor (atom 0))
 
-(defn next-octet
-  [buf]
-  (get buf (swap! cursor inc)))
-
 (defn current-octet
   [buf]
   (get buf @cursor))
+
+(defn next-octet
+  [buf]
+  (get buf (inc @cursor)))
+
+(defn next-octet!
+  [buf]
+  (get buf (swap! cursor inc)))
 
 (defn decode-integer-representation
   "6.1 Integer Representation"
@@ -128,11 +132,13 @@
   (let [b (get buf @cursor)
         i (bit-and (p2n-1 n) b)]
     (if (< i (p2n-1 n))
-      i
-      (loop [b (next-octet buf) i (p2n-1 n) m 0]
+      (do
+        (next-octet! buf)
+        i)
+      (loop [b (next-octet! buf) i (p2n-1 n) m 0]
         (if (= (bit-and b 128) 0)
           (+ i (* (bit-and b 127) (bit-shift-left 1 m)))
-          (recur (next-octet buf) (+ i (* (bit-and b 127) (bit-shift-left 1 m))) (+ m 7)))))))
+          (recur (next-octet! buf) (+ i (* (bit-and b 127) (bit-shift-left 1 m))) (+ m 7)))))))
 
 (defn decode-huffman-string
   "TODO: decode huffman encoded string"
@@ -142,7 +148,6 @@
 (defn decode-raw-string
   "TODO: Decode raw string"
   [buf length]
-  (swap! cursor inc)
   (let [data (subvec buf @cursor (swap! cursor #(+ % length)))]
     (if debug? (println "[decode-raw-string] data:" data))
     (apply str (map char data))))
@@ -150,7 +155,7 @@
 (defn decode-string-literal-representation
   "6.2 String Literal Representation"
   [buf]
-  (let [huffman? (bit-test (get buf @cursor) 7)
+  (let [huffman? (bit-test (current-octet buf) 7)
         string-length (decode-integer-representation buf 7)]
     (if debug? (println "[decode-string-literal-representation] string-length" string-length))
     (if huffman?
@@ -165,83 +170,60 @@
   (let [index (decode-integer-representation buf 7)]
     (ref-header indexed-table index)))
 
+(defn new-name
+  "New Name"
+  [buf]
+  (if debug? (println "[new-name]"))
+  (let [name (decode-string-literal-representation buf)
+        value (decode-string-literal-representation buf)
+        header [name value]]
+    header))
+
+(defn indexed-name
+  "Indexed Name"
+  [buf prefix-bit]
+  (if debug? (println "[indexed-name]"))
+  (let [index (decode-integer-representation buf prefix-bit)
+        indexed-header (ref-header indexed-table index)
+        value (decode-string-literal-representation buf)
+        header [(first indexed-header) value]]
+      header))
+
 (defn literal-header-field-with-incremental-indexing
   "7.2.1 Literal Header Field with Incremental Indexing"
   [buf]
-  (defn indexed-name
-    "7.2.1 Literal Header Field with Incremental Indexing - Indexed Name"
-    [buf]
-    (let [index (decode-integer-representation buf 6)
-          indexed-header (ref-header indexed-table index)]
-      (swap! cursor inc)
-      (let [value (decode-string-literal-representation buf)
-            header [(first indexed-header) value]]
-        (add-header! indexed-table header)
-        header)))
-  (defn new-name
-    "7.2.1 Literal Header Field with Incremental Indexing - New Name"
-    [buf]
-    (swap! cursor inc)
-    (let [name (decode-string-literal-representation buf)
-          value (decode-string-literal-representation buf)
-          header [name value]]
+  (if debug? (println "[literal-header-field-with-incremental-indexing]"))
+  (if-not (= (bit-and (current-octet buf) 2r00111111) 0)
+    (let [header (indexed-name buf 6)]
       (add-header! indexed-table header)
-      header))
-
-  (if (= (bit-and (first buf) 2r00111111) 0)
-    (new-name buf)
-    (indexed-name buf)))
+      header)
+    (do
+      (next-octet! buf)
+      (let [header (new-name buf)]
+        (add-header! indexed-table header)
+        header))))
 
 (defn literal-header-field-without-indexing
   "7.2.2 Literal Header Field without Indexing"
   [buf]
-  (defn indexed-name
-    "7.2.2 Literal Header Field without Indexing - Indexed Name"
-    [buf]
-    (let [index (decode-integer-representation buf 4)
-          indexed-header (ref-header indexed-table index)]
-      (swap! cursor inc)
-      (let [value (decode-string-literal-representation buf)
-            header [(first indexed-header) value]]
-      header)))
-  (defn new-name
-    "7.2.2 Literal Header Field without Indexing - New Name"
-    [buf]
-    (swap! cursor inc)
-    (let [name (decode-string-literal-representation buf)
-          value (decode-string-literal-representation buf)
-          header [name value]]
-      header))
-
-  (if (= (bit-and (first buf) 2r00001111) 0)
-    (new-name buf)
-    (indexed-name buf)))
+  (if debug? (println "[literal-header-field-without-indexing]"))
+  (if-not (= (bit-and (current-octet buf) 2r00001111) 0)
+    (do
+      (indexed-name buf 4))
+    (do
+      (next-octet! buf)
+      (new-name buf))))
 
 (defn literal-header-field-never-indexed
   "7.2.3 Literal Header Field never Indexed"
   [buf]
-  (defn indexed-name
-    "7.2.3 Literal Header Field never Indexed - Indexed Name"
-    [buf]
-    (let [index (decode-integer-representation buf 4)
-          indexed-header (ref-header indexed-table index)]
-      (swap! cursor inc)
-      (let [value (decode-string-literal-representation buf)
-            header [(first indexed-header) value]]
-        header)))
-  (defn new-name
-    "7.2.2 Literal Header Field never Indexed - New Name"
-    [buf]
-    (swap! cursor inc)
-    (let [name (decode-string-literal-representation buf)
-          value (decode-string-literal-representation buf)
-          header [name value]]
-      header))
-
-  (if debug? (println "literal-header-field-never-indexed"))
-  (if (= (bit-and (first buf) 2r00001111) 0)
-    (new-name buf)
-    (indexed-name buf)))
+  (if debug? (println "[literal-header-field-never-indexed]"))
+  (if-not (= (bit-and (current-octet buf) 2r00001111) 0)
+    (do
+      (indexed-name buf 4))
+    (do
+      (next-octet! buf)
+      (new-name buf))))
 
 (defn header-table-size-update
   "7.3 Header Table Size Update"
@@ -250,7 +232,7 @@
 
 (defn decode-header
   [buf]
-  (let [head (first buf)]
+  (let [head (current-octet buf)]
     (cond
      (bit-test head 7) (indexed-header-field-representation buf)
      (bit-test head 6) (literal-header-field-with-incremental-indexing buf)
@@ -264,4 +246,11 @@
    The 'buf' arg should be binary array
    TODO: decode from string"
   [buf]
-  (decode-header buf))
+  (reset! cursor 0)
+  (loop [result '[]]
+    (println "result:" result "@cursor:" @cursor)
+    (println "current-octet:" (current-octet buf))
+    (println "next-octet:" (next-octet buf))
+    (if (nil? (current-octet buf))
+      result
+      (recur (conj result (decode-header buf))))))
