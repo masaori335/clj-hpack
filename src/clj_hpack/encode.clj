@@ -18,5 +18,5 @@
 
 (defn encode
   "TODO: Encode header"
-  [buf]
-  0)
+  [table buf]
+  [0])

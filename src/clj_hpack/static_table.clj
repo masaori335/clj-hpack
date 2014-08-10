@@ -1,3 +1,13 @@
+;; 3.3.1.  Static Table
+;;
+;; The static table consists of a predefined static list of header
+;;    fields.  Its entries are defined in Appendix B.
+;;
+;; ----
+;;
+;; NOTE: The index of static table start with "1". First record is dummy.
+;;
+
 (ns clj-hpack.static-table)
 
 (def static-table

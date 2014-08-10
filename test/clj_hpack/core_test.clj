@@ -13,8 +13,8 @@
 
 (deftest test_of_p2n-1
   "Power of 2 minus 1"
-  (testing "n = 0" (is (= (p2n-1 0) [2r0])))
-  (testing "n = 1" (is (= (p2n-1 1) [2r1])))
-  (testing "n = 2" (is (= (p2n-1 2) [2r11])))
-  (testing "n = 3" (is (= (p2n-1 3) [2r111])))
-  (testing "n = 4" (is (= (p2n-1 4) [2r1111]))))
+  (testing "n = 0" (is (= (p2n-1 0) 2r0)))
+  (testing "n = 1" (is (= (p2n-1 1) 2r1)))
+  (testing "n = 2" (is (= (p2n-1 2) 2r11)))
+  (testing "n = 3" (is (= (p2n-1 3) 2r111)))
+  (testing "n = 4" (is (= (p2n-1 4) 2r1111))))
