@@ -20,7 +20,9 @@
 (defprotocol IHeaderTable
   "Access to Header Table"
   (record [this index])
-  (add! [this header]))
+  (add! [this header])
+  (lookup [this header])
+  (lookup-key [this key]))
 
 ;; "TODO: Control header-table size
 ;;        http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09#section-3.3.3"
@@ -35,4 +37,11 @@
   (add! [this header]
     (if debug? (println "[add-header!] header-table" header-table))
     (set! header-table (cons header header-table))
-    (if debug? (println "[add-header!] header-table" header-table))))
+    (if debug? (println "[add-header!] header-table" header-table)))
+
+  (lookup [this header]
+    (let [index (.indexOf static-table header)]
+      index))
+
+  (lookup-key [this key]
+    (.indexOf static-table (first (filter #(= (first %) key) static-table)))))
