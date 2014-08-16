@@ -9,10 +9,14 @@
   [i n]
   (if (< i (p2n-1 n))
     [i]
-    (loop [i (- i (p2n-1 n)) result '((p2n-1 n))]
+    (loop [i (- i (p2n-1 n)) result [(p2n-1 n)]]
       (if (< i 128)
-        (conj result i)
-        (recur (quot i 128) (cons result (+ (bit-and i 127) 128)))))))
+        (do
+          (if debug? (println "[integer-representation]" result i))
+          (conj result i))
+        (do
+          (if debug? (println "[integer-representation]" result i))
+          (recur (quot i 128) (conj result (+ (bit-and i 127) 128))))))))
 
 (defn string-literal-representation
   "6.2 String Literal Representation"
