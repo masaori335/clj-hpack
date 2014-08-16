@@ -41,7 +41,17 @@
 
   (lookup [this header]
     (let [index (.indexOf static-table header)]
-      index))
+      (if debug? (println "[lookup] header" header ", index in static-table" index))
+      (if (< index 0)
+        (let [index (.indexOf header-table header)]
+          (if debug? (println "[lookup] header" header ", index in header-table" index))
+          (if (< index 0)
+            index
+            (+ index 62)))
+        index)))
 
   (lookup-key [this key]
-    (.indexOf static-table (first (filter #(= (first %) key) static-table)))))
+    (let [index (.indexOf static-table (first (filter #(= (first %) key) static-table)))]
+      (if (< index 0)
+        (.indexOf header-table (first (filter #(= (first %) key) header-table)))
+        index))))

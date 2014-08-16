@@ -4,8 +4,6 @@
 
 ;;; Encoder
 
-(def cursor (atom 0))
-
 (defn integer-representation
   "6.1 Integer Representation"
   [i n]
@@ -39,7 +37,8 @@
   "7.2.1.  Literal Header Field with Incremental Indexing (new name)"
   [table header]
   (add! table header)
-  (let [index (lookup-key table key)]
+  (let [index (lookup-key table (first header))]
+    (println "[literal-header-field-with-icremental-indexing] index:" index)
     (if (> index 0)
       (concat (set-prefix-bit (integer-representation index 5) 6)
               (string-literal-representation (last header) false))
@@ -61,7 +60,7 @@
 (defn literal-header-field-never-indexed
   "7.2.3.  Literal Header Field never Indexed"
   [table header]
-  (let [index (lookup-key table key)]
+  (let [index (lookup-key table (first header))]
     (if (> index 0)
       (concat (set-prefix-bit (integer-representation index 4) 5)
               (string-literal-representation (last header) false))
@@ -70,20 +69,19 @@
               (string-literal-representation (last header) false)))))
 
 (defn encode-a-header!
+  "TODO: Check header-table size"
   [table header & {:keys [sensitive] :or {sensitive false}}]
-  (if sensitive
-    (literal-header-field-never-indexed table header)
-    (let [key (first header)
-          value (last header)
-          index (lookup table header)]
-      (if (> index 0)
-        (indexed-header-field-representation index)
-        (literal-header-field-with-icremental-indexing table header)))))
+  (cond
+    sensitive (literal-header-field-never-indexed table header)
+    (> (lookup table header) 0) (indexed-header-field-representation table header)
+    :else (literal-header-field-with-icremental-indexing table header)))
 
 (defn encode!
-  "TODO: Encode header"
+  "NOTE: How to distinguish sensitive header?"
   [table headers]
-  (loop [headers headers table table result '[]]
-    (if (nil? headers)
+  (loop [header (first headers) headers (rest headers) result '() table table]
+    (if (nil? header)
       result
-      (recur (rest headers) table (conj result (encode-a-header! table (first headers)))))))
+      (do
+        (println "header:" header ", result" result)
+        (recur (first headers) (rest headers) (concat result (encode-a-header! table header)) table)))))
