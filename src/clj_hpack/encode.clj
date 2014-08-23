@@ -65,7 +65,7 @@
   "7.2.3.  Literal Header Field never Indexed"
   [table header]
   (let [index (lookup-key table (first header))]
-    (if (pos? index 0)
+    (if (pos? index)
       (concat (set-prefix-bit (integer-representation index 4) 5)
               (string-literal-representation (last header) false))
       (concat '(2r00010000)
