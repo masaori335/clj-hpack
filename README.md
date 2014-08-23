@@ -1,5 +1,7 @@
 # clj-hpack
 
+[![Build Status](https://travis-ci.org/masaori335/clj-hpack.svg?branch=master)](https://travis-ci.org/masaori335/clj-hpack)
+
 A Clojure library of HPACK draft-09 implementation.
 
 - http://tools.ietf.org/html/draft-ietf-httpbis-header-compression-09
