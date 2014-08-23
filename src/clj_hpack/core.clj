@@ -10,4 +10,4 @@
   "'2 to the power of n minus 1'
    '2^n - 1'"
   [n]
-  (- (bit-shift-left 1 n) 1))
+  (dec (bit-shift-left 1 n)))

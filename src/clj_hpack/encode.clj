@@ -43,7 +43,7 @@
   (add! table header)
   (let [index (lookup-key table (first header))]
     (println "[literal-header-field-with-icremental-indexing] index:" index)
-    (if (> index 0)
+    (if (pos? index)
       (concat (set-prefix-bit (integer-representation index 5) 6)
               (string-literal-representation (last header) false))
       (concat '(2r01000000)
@@ -54,7 +54,7 @@
   "7.2.2.  Literal Header Field without Indexing"
   [table header]
   (let [index (lookup-key table (first header))]
-    (if (> index 0)
+    (if (pos? index)
       (concat (integer-representation index 4)
               (string-literal-representation (last header) false))
       (concat '(2r00000000)
@@ -65,7 +65,7 @@
   "7.2.3.  Literal Header Field never Indexed"
   [table header]
   (let [index (lookup-key table (first header))]
-    (if (> index 0)
+    (if (pos? index 0)
       (concat (set-prefix-bit (integer-representation index 4) 5)
               (string-literal-representation (last header) false))
       (concat '(2r00010000)
@@ -77,7 +77,7 @@
   [table header & {:keys [sensitive] :or {sensitive false}}]
   (cond
     sensitive (literal-header-field-never-indexed table header)
-    (> (lookup table header) 0) (indexed-header-field-representation table header)
+    (pos? (lookup table header)) (indexed-header-field-representation table header)
     :else (literal-header-field-with-icremental-indexing table header)))
 
 (defn encode!

@@ -28,7 +28,7 @@
         (next-octet! buf)
         i)
       (loop [b (next-octet! buf) i (p2n-1 n) m 0]
-        (if (= (bit-and b 128) 0)
+        (if (zero? (bit-and b 128))
           (+ i (* (bit-and b 127) (bit-shift-left 1 m)))
           (recur (next-octet! buf) (+ i (* (bit-and b 127) (bit-shift-left 1 m))) (+ m 7)))))))
 
@@ -42,7 +42,7 @@
   [buf length]
   (let [data (subvec buf @cursor (swap! cursor #(+ % length)))]
     (if debug? (println "[decode-raw-string] data:" data))
-    (apply str (map char data))))
+    (clojure.string/join (map char data))))
 
 (defn decode-string-literal-representation
   "6.2 String Literal Representation"
@@ -85,7 +85,7 @@
   "7.2.1 Literal Header Field with Incremental Indexing"
   [table buf]
   (if debug? (println "[literal-header-field-with-incremental-indexing]"))
-  (if-not (= (bit-and (current-octet buf) 2r00111111) 0)
+  (if-not (zero? (bit-and (current-octet buf) 2r00111111))
     (let [header (indexed-name table buf 6)]
       (header-table/add! table header)
       header)
@@ -99,9 +99,8 @@
   "7.2.2 Literal Header Field without Indexing"
   [table buf]
   (if debug? (println "[literal-header-field-without-indexing]"))
-  (if-not (= (bit-and (current-octet buf) 2r00001111) 0)
-    (do
-      (indexed-name table buf 4))
+  (if-not (zero? (bit-and (current-octet buf) 2r00001111))
+    (indexed-name table buf 4)
     (do
       (next-octet! buf)
       (new-name buf))))
@@ -110,9 +109,8 @@
   "7.2.3 Literal Header Field never Indexed"
   [table buf]
   (if debug? (println "[literal-header-field-never-indexed]"))
-  (if-not (= (bit-and (current-octet buf) 2r00001111) 0)
-    (do
-      (indexed-name table buf 4))
+  (if-not (zero? (bit-and (current-octet buf) 2r00001111))
+    (indexed-name table buf 4)
     (do
       (next-octet! buf)
       (new-name buf))))
